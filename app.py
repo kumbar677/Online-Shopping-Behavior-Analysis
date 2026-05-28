@@ -35,11 +35,17 @@ def get_local_ip():
         return "127.0.0.1"
 
 # Configure Uploads
-UPLOAD_FOLDER = 'uploads'
+if os.environ.get('VERCEL'):
+    UPLOAD_FOLDER = '/tmp/uploads'
+    LOGO_FOLDER = '/tmp/static/uploads/logos'
+else:
+    UPLOAD_FOLDER = 'uploads'
+    LOGO_FOLDER = 'static/uploads/logos'
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(LOGO_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['LOGO_FOLDER'] = 'static/uploads/logos'
-os.makedirs(app.config['LOGO_FOLDER'], exist_ok=True)
+app.config['LOGO_FOLDER'] = LOGO_FOLDER
 
 # Configure Mail
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -327,6 +333,15 @@ def settings():
         return redirect(url_for('settings'))
         
     return render_template('settings.html')
+
+@app.route('/static/uploads/logos/<int:business_id>/<filename>')
+def serve_uploaded_logo(business_id, filename):
+    if os.environ.get('VERCEL'):
+        logo_dir = os.path.join('/tmp/static/uploads/logos', str(business_id))
+        return send_file(os.path.join(logo_dir, filename))
+    else:
+        logo_dir = os.path.join(app.root_path, 'static', 'uploads', 'logos', str(business_id))
+        return send_file(os.path.join(logo_dir, filename))
 
 # -------------- DASHBOARD --------------
 
