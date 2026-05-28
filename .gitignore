@@ -1,0 +1,19 @@
+# Environment
+.env
+venv/
+git/
+__pycache__/
+*.pyc
+
+
+# Generated files
+*.pdf
+uploads/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

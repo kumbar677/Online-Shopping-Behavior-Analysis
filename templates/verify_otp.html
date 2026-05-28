@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP | DataSense.AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body { 
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; background: var(--bg-main); color: var(--text-primary); 
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            background-image: radial-gradient(circle at top right, rgba(99, 102, 241, 0.15), transparent 400px),
+                              radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.15), transparent 400px);
+        }
+        .login-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 420px; }
+        .auth-container { 
+            background: var(--card-bg); padding: 40px 50px; border-radius: 16px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); width: 100%; box-sizing: border-box;
+            text-align: center; border: 1px solid rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+        }
+        .logo-box { margin-bottom: 30px; text-align: center; }
+        .logo-box i { font-size: 2.8rem; color: #6366f1; margin-bottom: 10px; }
+        .logo-box h2 { margin: 0; font-weight: 700; font-size: 2rem; letter-spacing: -0.5px; }
+        .logo-box span.highlight { color: #ec4899; }
+        .logo-box p { color: var(--text-secondary); font-size: 1.05rem; margin-top: 8px; opacity: 0.9; }
+        
+        .otp-container { display: flex; gap: 8px; justify-content: center; margin-bottom: 25px; margin-top: 15px; }
+        .otp-box {
+            width: 45px; height: 50px; text-align: center; font-size: 1.5rem; border-radius: 8px; font-weight: 700;
+            border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; transition: all 0.2s;
+            font-family: 'Outfit', sans-serif; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .otp-box:focus { border-color: #6366f1; outline: none; background: rgba(99,102,241,0.1); box-shadow: 0 0 0 3px rgba(99,102,241,0.2); transform: scale(1.05); }
+        .otp-box::-webkit-inner-spin-button, .otp-box::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        .auth-container button { 
+            width: 100%; padding: 14px; margin-top: 5px; 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; 
+            border-radius: 8px; font-weight: 600; cursor: pointer; 
+            transition: all 0.3s ease; font-size: 1.05rem; font-family: 'Outfit', sans-serif;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+        .auth-container button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6); }
+        
+        #resendBtn { background: transparent; color: #a5b4fc; border: 1px solid #6366f1; box-shadow: none; display: none; margin-top: 15px; }
+        #resendBtn:hover { background: rgba(99,102,241,0.1); box-shadow: none; transform: none; }
+        
+        .error-msg { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 12px; border-radius: 8px; font-size: 0.9em; margin-bottom: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px; justify-content: center; }
+        .success-msg { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 12px; border-radius: 8px; font-size: 0.9em; margin-bottom: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px; justify-content: center; }
+    </style>
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <div class="logo-box">
+            <i class="fa-solid fa-shield-halved"></i>
+            <h2>DataSense<span class="highlight">.AI</span></h2>
+            <p>Verification Required</p>
+        </div>
+        <div class="auth-container">
+
+        {% if error %}
+            <div class="error-msg"><i class="fa-solid fa-triangle-exclamation"></i> {{ error }}</div>
+        {% endif %}
+        {% if message %}
+            <div class="success-msg"><i class="fa-solid fa-circle-check"></i> {{ message }}</div>
+        {% endif %}
+
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 10px; line-height: 1.5;">Enter the 6-digit OTP sent to <strong>{{ session.get('reset_email') }}</strong></p>
+
+        <form method="POST">
+            <div class="otp-container">
+                <input type="text" maxlength="1" class="otp-box" name="otp1" required autocomplete="off" autofocus>
+                <input type="text" maxlength="1" class="otp-box" name="otp2" required autocomplete="off">
+                <input type="text" maxlength="1" class="otp-box" name="otp3" required autocomplete="off">
+                <input type="text" maxlength="1" class="otp-box" name="otp4" required autocomplete="off">
+                <input type="text" maxlength="1" class="otp-box" name="otp5" required autocomplete="off">
+                <input type="text" maxlength="1" class="otp-box" name="otp6" required autocomplete="off">
+            </div>
+            
+            <div id="timer" style="color: #eab308; font-size: 0.95rem; margin-bottom: 20px; font-weight: 500;">
+                <i class="fa-regular fa-clock"></i> Expires in <span id="timeSpan">10:00</span>
+            </div>
+
+            <button type="submit">Verify Code <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i></button>
+        </form>
+
+        <form method="POST" action="/forgot-password" style="margin: 0;">
+            <input type="hidden" name="email" value="{{ session.get('reset_email') }}">
+            <button type="submit" id="resendBtn">Resend Code <i class="fa-solid fa-rotate-right" style="margin-left: 5px;"></i></button>
+        </form>
+
+        <div style="margin-top: 25px; font-size: 0.95rem;">
+            <a href="/login" style="color: var(--text-secondary); text-decoration: none; transition: color 0.2s;"><i class="fa-solid fa-arrow-left"></i> Back to Login</a>
+        </div>
+
+        </div>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll('.otp-box');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && input.value === '') {
+                    if (index > 0) {
+                        inputs[index - 1].focus();
+                        inputs[index - 1].value = '';
+                    }
+                }
+            });
+            input.addEventListener('input', (e) => {
+                // Allow only numbers
+                input.value = input.value.replace(/[^0-9]/g, '');
+                if (input.value !== '' && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+            // Handle paste
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+                for (let i = 0; i < pastedData.length; i++) {
+                    if (inputs[i]) {
+                        inputs[i].value = pastedData[i];
+                        if (i < inputs.length - 1) inputs[i + 1].focus();
+                    }
+                }
+            });
+        });
+
+        let timeLeft = 600;
+        const timeSpan = document.getElementById('timeSpan');
+        const timerEl = document.getElementById('timer');
+        const resendBtn = document.getElementById('resendBtn');
+        
+        const countdown = setInterval(() => {
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            timeSpan.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerEl.innerHTML = "OTP Expired";
+                timerEl.style.color = "#ef4444";
+                resendBtn.style.display = "block";
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+product_id,product_name,category,price,brand,discount
+P1,Phone,Tech,500,Apple,0
+P2,Laptop,Tech,1000,Dell,10

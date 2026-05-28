@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data History | DataSense.AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .mgmt-nav li a:hover { background: rgba(99, 102, 241, 0.05); color: var(--accent-blue) !important; }
+        .alert-success { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                {% if current_user.logo_url %}
+                    <img src="{{ current_user.logo_url }}" alt="{{ company_name }} Logo" class="sidebar-logo-img">
+                {% else %}
+                    <div class="logo-fallback">{{ company_name[:2]|upper }}</div>
+                    <h2 style="font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ company_name }}</h2>
+                {% endif %}
+            </div>
+            <nav>
+                <ul id="sidebar-nav">
+                    <li><a href="/"><i class="fa-solid fa-border-all"></i> Dashboard</a></li>
+                </ul>
+                <div style="margin-top: 2rem; padding-left: 20px; color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Management</div>
+                <ul style="list-style: none; padding: 0; margin-top: 0.5rem;" class="mgmt-nav">
+                    <li class="active"><a href="/data-history" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: var(--text-primary); text-decoration: none; border-radius: 8px; transition: all 0.3s ease; background: rgba(99, 102, 241, 0.1);"><i class="fa-solid fa-clock-rotate-left" style="width: 20px; text-align: center;"></i> Upload History</a></li>
+                    <li><a href="/settings" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: var(--text-secondary); text-decoration: none; border-radius: 8px; transition: all 0.3s ease;"><i class="fa-solid fa-gear" style="width: 20px; text-align: center;"></i> Brand Settings</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <p>Status: <span class="status-indicator"></span> Live</p>
+                <small>System optimized.</small>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <div>
+                    <h1 style="margin: 0; font-size: 2.2rem; background: linear-gradient(135deg, #a5b4fc, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Dataset Manager</h1>
+                    <p style="color: var(--text-secondary); margin-top: 5px; font-size: 1rem;">Manage your active uploads, safely test environments, and recover deleted analytics.</p>
+                </div>
+                <a href="/" style="background: rgba(255,255,255,0.1); color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; border: 1px solid rgba(255,255,255,0.2);"><i class="fa-solid fa-chart-line"></i> View Dashboard</a>
+            </div>
+
+            <div class="card" style="padding: 25px; border-radius: 12px;">
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert-{{ category }}">
+                                <i class="fa-solid fa-circle-check"></i> {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); color: var(--text-secondary);">
+                                <th style="padding: 15px; font-weight: 600;">Dataset Name</th>
+                                <th style="padding: 15px; font-weight: 600;">Status</th>
+                                <th style="padding: 15px; font-weight: 600;">Metrics Found</th>
+                                <th style="padding: 15px; font-weight: 600;">Upload Time</th>
+                                <th style="padding: 15px; font-weight: 600; text-align: center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in datasets %}
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; {% if d.is_deleted %}opacity: 0.4;{% endif %}">
+                                <td style="padding: 18px 15px;">
+                                    <div style="font-weight: 600; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-database" style="color: #6366f1;"></i>
+                                        {{ d.dataset_name }}
+                                        {% if d.is_deleted %}
+                                            <span style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(239,68,68,0.3);"><i class="fa-solid fa-trash"></i> TRASHED</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td style="padding: 15px;">
+                                    {% if d.status == 'completed' %}
+                                        <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 600;"><i class="fa-solid fa-check-circle"></i> Completed</span>
+                                    {% elif d.status == 'processing' %}
+                                        <span style="background: rgba(234, 179, 8, 0.2); color: #eab308; font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(234, 179, 8, 0.3); font-weight: 600;"><i class="fa-solid fa-gear fa-spin"></i> Processing</span>
+                                    {% elif d.status == 'partial_success' %}
+                                        <span style="background: rgba(249, 115, 22, 0.2); color: #f97316; font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(249, 115, 22, 0.3); font-weight: 600;"><i class="fa-solid fa-triangle-exclamation"></i> Partial</span>
+                                    {% elif d.status == 'queued' %}
+                                        <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 600;"><i class="fa-solid fa-hourglass-half"></i> Queued</span>
+                                    {% else %}
+                                        <span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 600;"><i class="fa-solid fa-xmark-circle"></i> Failed</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 15px; color: var(--text-secondary); font-size: 0.95rem;">
+                                    <span style="display:inline-block; min-width: 60px;"><b>{{ d.u_count }}</b> Users</span> | 
+                                    <span style="display:inline-block; min-width: 60px;"><b>{{ d.p_count }}</b> Products</span> | 
+                                    <span><b>{{ d.o_count }}</b> Orders</span>
+                                </td>
+                                <td style="padding: 15px; color: var(--text-secondary); font-size: 0.95rem;">
+                                    <i class="fa-regular fa-clock"></i> {{ d.time_str }}
+                                </td>
+                                <td style="padding: 15px; text-align: center;">
+                                    <div style="display: flex; gap: 8px; justify-content: center;">
+                                        <button onclick="previewDataset({{ d.id }}, '{{ d.dataset_name }}')" title="Preview Data" style="background: rgba(99,102,241,0.1); color: #a5b4fc; border: 1px solid #6366f1; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                            <i class="fa-solid fa-eye"></i> Preview
+                                        </button>
+                                        
+                                        {% if not d.is_deleted %}
+                                            <form action="{{ url_for('delete_dataset', dataset_id=d.id) }}" method="POST" style="margin:0;" onsubmit="return confirmDelete(event, '{{ d.dataset_name }}')">
+                                                <button type="submit" title="Remove Dataset" style="background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid #ef4444; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <form action="{{ url_for('restore_dataset', dataset_id=d.id) }}" method="POST" style="margin:0;">
+                                                <button type="submit" title="Restore Dataset" style="background: rgba(16, 185, 129, 0.1); color: #6ee7b7; border: 1px solid #10b981; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                                    <i class="fa-solid fa-recycle"></i> Restore
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-secondary);">
+                                    No datasets tracked in this environment yet. Go to Data Import to establish your first baseline!
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Fast Preview Modal built dynamically to enforce low-RAM rendering -->
+            <div id="previewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+                <div style="background: var(--card-bg); width: 90%; max-width: 1100px; max-height: 85vh; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column;">
+                    
+                    <div style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); border-radius: 12px 12px 0 0;">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-eye" style="color:#6366f1;"></i> Data Snapshot: <span id="previewTitle" style="color:#ec4899; font-weight: bold;"></span>
+                        </h3>
+                        <button onclick="document.getElementById('previewModal').style.display='none'" style="background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; opacity: 0.7; transition: 0.2s;">&times;</button>
+                    </div>
+                    
+                    <div style="padding: 25px; overflow-y: auto; flex: 1;">
+                        <h4 style="margin-top: 0; color: #a5b4fc; border-bottom: 1px solid rgba(165, 180, 252, 0.2); padding-bottom: 8px;">Order Data Pipeline (Top 10 isolated rows)</h4>
+                        <div style="overflow-x: auto; margin-bottom: 30px; background: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;" id="previewTableOrders">
+                                <thead style="background: rgba(255,255,255,0.05); color: var(--text-secondary); text-align: left;"><tr></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        
+                        <h4 style="color: #a5b4fc; border-bottom: 1px solid rgba(165, 180, 252, 0.2); padding-bottom: 8px;">Products Matrix Configuration (Top 10 isolated rows)</h4>
+                        <div style="overflow-x: auto; margin-bottom: 30px; background: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;" id="previewTableProducts">
+                                <thead style="background: rgba(255,255,255,0.05); color: var(--text-secondary); text-align: left;"><tr></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        function confirmDelete(e, name) {
+            e.preventDefault();
+            const msg = `CRITICAL ACTION WARNING:\n\nAre you sure you want to delete the dataset '${name}'?\n\nThis will instantly scrub it entirely from all core analytics dashboards and KPI visualizers.\n\nType DELETE to confirm:`;
+            const res = prompt(msg);
+            if (res === 'DELETE') {
+                e.target.submit();
+            } else {
+                alert("Deletion successfully aborted. Dataset remains natively active.");
+            }
+        }
+
+        async function previewDataset(id, name) {
+            document.getElementById('previewTitle').innerText = name;
+            document.getElementById('previewModal').style.display = 'flex';
+            
+            try {
+                const res = await fetch(`/dataset/${id}/preview`);
+                const data = await res.json();
+                
+                renderTable('previewTableOrders', data.orders);
+                renderTable('previewTableProducts', data.products);
+                
+            } catch(e) {
+                console.error("AJAX Failed to load JSON preview", e);
+            }
+        }
+        
+        function renderTable(tableId, dataList) {
+            const table = document.getElementById(tableId);
+            const thead = table.querySelector('thead tr');
+            const tbody = table.querySelector('tbody');
+            
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+            
+            if (!dataList || dataList.length === 0) {
+                tbody.innerHTML = '<tr><td style="padding:15px;">No structural records actively found in this specific table segment.</td></tr>';
+                return;
+            }
+            
+            const keys = Object.keys(dataList[0]);
+            keys.forEach(k => {
+                const th = document.createElement('th');
+                th.innerText = k.toUpperCase().replace('_', ' ');
+                th.style.padding = '12px 10px';
+                th.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+                thead.appendChild(th);
+            });
+            
+            dataList.forEach((row, i) => {
+                const tr = document.createElement('tr');
+                tr.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)';
+                keys.forEach(k => {
+                    const td = document.createElement('td');
+                    td.innerText = row[k];
+                    td.style.padding = '10px';
+                    td.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>

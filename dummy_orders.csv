@@ -1,0 +1,3 @@
+order_id,user_id,product_id,quantity,order_date,total_amount,payment_method,order_status
+O1,U1,P1,1,2024-01-01,500,Card,Completed
+O2,U2,P2,2,2024-01-02,1800,Cash,Completed
